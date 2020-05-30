@@ -13,10 +13,22 @@ var playerList = [];
 var xSize = 9;
 var ySize = 9;
 
+/*
+class Player {
+    constructor(socket) {
+        this.id = socket.id
+        this.socket = socket
+        this.hp = 10
+        this.gold = 0
+        this.units = [];
+        this.projectiles = [];
+        this.shopItems=[];
+        this.fieldArray = [];
+        console.log("Player with the id " + this.id + " has connected");
+    }
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-
+}
+*/
 //Port on which the web is listening
 const port = 3000;
 //Start the server, listens on the chosen port
@@ -24,8 +36,8 @@ http.listen(port, ()=>{
   console.log('Server is running on port:' + port)
 })
 //Public images folder
-app.get('/public/images/*',function (req,res) {
-    res.sendFile(req.url);
+app.get('/public/javascripts/*',function (req,res) {
+    res.sendFile(req.url,{root:__dirname});
 })
 //Do stuf when recieving a get request on the root
 app.get('/', function(request, response){
@@ -35,23 +47,45 @@ app.get('/', function(request, response){
 //Trigger on client connection
 io.on('connect',function(socket){
   //Store client resources, level and health
-  socket.level = 1;
-  socket.hp = 10;
-  socket.gold = 1;
+    socket.player={
+        gold:0,
+        hp:10,
+        unitList:[],
+        projectileList:[],
+        shopItems:[],
+        fieldArray:[]
+    }
+    playerList.push(socket);
   //Generate an empty client board state
     for(x = 0;x<xSize;x++){
-        socket.fieldArray.push([]);
+        socket.player.fieldArray.push([]);
         for(y = 0;y <ySize;y++){
-            socket.fieldArray[x].push(0);
+            socket.player.fieldArray[x].push(0);
         }
     }
-  //store client data for reference
-  socketList.push(socket);
-  //Find the client who disconnected and removes them from the client list on disconnect
+  //Event Handlers
+    socket.on('gimme',function(e){
+        sendPlayerInfo(playerList[0].id);
+    });
+    socket.on('buyUnit',function(e){
+        playerList.forEach(function(){
+            if(element.id == e.playerID){
+                element.player.unitList.push(e.unit);
+            }
+        })
+        console.log(e);
+    })
+    socket.on('sellUnit',function(e){
+
+    })
+    socket.on('moveUnit',function(e){
+
+    })
+  //Find the client who disconnected and removes them from the player list on disconnect
   socket.on('disconnect',function(){
-      socketList.forEach(function(element){
+      playerList.forEach(function(element){
         if(element.id === socket.id){
-          if(socketList.indexOf(element) !== -1){socketList.splice(socketList.indexOf(element),1)};
+          if(playerList.indexOf(element) !== -1){playerList.splice(playerList.indexOf(element),1)};
         }
       }
       )
@@ -60,8 +94,14 @@ io.on('connect',function(socket){
 
 //TODO Send shop state
 function randomizeShops(){
-clientList.forEach(function(element){})
+playerList.forEach(function(element){})
 }
 
 
-
+function sendPlayerInfo(playerID){
+    playerList.forEach(function(element){
+        if(element.id === playerID){
+            io.emit('playerInfo', element.player);
+        }
+    })
+}
