@@ -68,9 +68,10 @@ io.on('connect',function(socket){
         sendPlayerInfo(playerList[0].id);
     });
     socket.on('buyUnit',function(e){
-        playerList.forEach(function(){
+        playerList.forEach(function(element){
             if(element.id == e.playerID){
                 element.player.unitList.push(e.unit);
+                console.log(element.player.unitList);
             }
         })
         console.log(e);
