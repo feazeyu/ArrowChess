@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<style>
+    body{
+        background-color: black;
+        margin:0px;
+        overflow: hidden;
+    }
+</style>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Arrowz boi</title>
+</head>
+<body>
+<canvas class="gamefield" id="game">
+
+</canvas>
+</body>
+</html>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    //Array to store all fields
+    var fieldArray = [];
+    //Begin a socket connection
+    var socket = io();
+    //Get the object of gamefield
+    var canvas = document.getElementById("game");
+    var c = canvas.getContext("2d");
+    //Set the height and width of the gamefield
+
+    //Populate the gamefield of size xSize * ySize, fields wil be the size of fieldSize * fieldSize
+    function fieldInit(xSize,ySize, fieldSize){
+        canvas.width = xSize * fieldSize;
+        canvas.height = ySize * fieldSize;
+        for(x = 0;x<xSize;x++){
+            fieldArray.push([]);
+            for(y = 0;y <ySize;y++){
+                //Input field data here
+                fieldArray[x].push(new tempRect(x, y, fieldSize));
+            }
+        }
+    }
+    //Temporary rectangle object
+    class tempRect{
+        constructor(x, y, size){
+            this.x = x;
+            this.y = y;
+            this.size = size;
+            this.buildable = false;
+            this.enemy = false;
+            this.draw();
+        }
+        draw(){
+            c.clearRect(this.x*this.size, this.y*this.size, this.size, this.size);
+            if(this.enemy == true){
+                c.strokeStyle = "#FF0000"
+            } else if (this.buildable == false){
+                c.strokeStyle = "#929090"
+            } else {
+                c.strokeStyle = "#FFFFFF"
+            }
+            c.beginPath();
+            c.strokeRect(this.x*this.size, this.y*this.size, this.size, this.size);
+            c.closePath();
+        }
+        /*     Used for testing if click event works.
+        test(){
+            c.clearRect(this.x*this.size, this.y*this.size, this.size, this.size);
+            c.beginPath();
+            c.strokeStyle = "#FF0000";
+            c.strokeRect(this.x*this.size, this.y*this.size, this.size, this.size);
+            c.closePath();
+        }
+         */
+    }
+    //Call the init
+    fieldInit(9,9,52);
+    //Track the mouse position
+    var mouse= {
+        x: 0,
+        y: 0
+    }
+    window.addEventListener('mousemove',function(e){
+        mouse.x = e.x;
+        mouse.y = e.y;
+    });
+    window.addEventListener('click', function(e){
+        console.log("X: " + mouse.x + " Y: " + mouse.y);
+        //Calculate the field you clicked on
+        let clickedOnX = Math.floor(mouse.x/52);
+        let clickedOnY = Math.floor(mouse.y/52);
+        //fieldArray[clickedOnX][clickedOnY].test(); //Used for debugging click calculation
+    });
+</script>
+
+
+//Temporary client side html page, is subject to change.
