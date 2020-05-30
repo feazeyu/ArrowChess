@@ -17,6 +17,11 @@
 </canvas>
 </body>
 </html>
+<script src="/public/javascripts/projectile.js"></script>
+<script src="/public/javascripts/unit.js"></script>
+<script src="/public/javascripts/shop.js"></script>
+<script src="/public/javascripts/player.js"></script>
+<script src="/public/javascripts/client.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
     //Array to store all fields
@@ -91,6 +96,18 @@
         let clickedOnY = Math.floor(mouse.y/52);
         //fieldArray[clickedOnX][clickedOnY].test(); //Used for debugging click calculation
     });
+
+    function buyUnit(unit){
+        //TODO
+      socket.emit('buyUnit',{
+          unit: "unit",
+          playerID: socket.id
+      });
+    };
+
+    socket.on('playerInfo', function(e){
+        console.log(e);
+    })
 </script>
 
 
