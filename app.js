@@ -1,10 +1,20 @@
 var createError = require('http-errors');
 var express = require('express')
+
+
+var socket_io = require('socket.io');
 var app = express();
-var http = require('http').createServer(app);
-var io = require('socket.io')(http);
+
+var io = socket_io();
+app.io = io;
+
+
+
 var publicDir = require('path').join(__dirname,'/public');
 app.use(express.static(publicDir));
+
+const Player = require('./lib/player.js');	
+
 
 var socketList = [];
 var playerList = [];
@@ -13,28 +23,6 @@ var playerList = [];
 var xSize = 9;
 var ySize = 9;
 
-/*
-class Player {
-    constructor(socket) {
-        this.id = socket.id
-        this.socket = socket
-        this.hp = 10
-        this.gold = 0
-        this.units = [];
-        this.projectiles = [];
-        this.shopItems=[];
-        this.fieldArray = [];
-        console.log("Player with the id " + this.id + " has connected");
-    }
-
-}
-*/
-//Port on which the web is listening
-const port = 3000;
-//Start the server, listens on the chosen port
-http.listen(port, ()=>{
-  console.log('Server is running on port:' + port)
-})
 //Public images folder
 app.get('/public/javascripts/*',function (req,res) {
     res.sendFile(req.url,{root:__dirname});
@@ -44,6 +32,7 @@ app.get('/', function(request, response){
   //Send the client the homepage
   response.sendFile('index.html', {root:__dirname});
 });
+
 //Trigger on client connection
 io.on('connect',function(socket){
   //Store client resources, level and health
@@ -95,7 +84,7 @@ io.on('connect',function(socket){
 
 //TODO Send shop state
 function randomizeShops(){
-playerList.forEach(function(element){})
+	playerList.forEach(function(element){})
 }
 
 
@@ -106,3 +95,5 @@ function sendPlayerInfo(playerID){
         }
     })
 }
+
+module.exports = app;
