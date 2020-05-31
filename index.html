@@ -34,12 +34,16 @@
     var c = canvas.getContext("2d");
     //Create the player on join.
     var player;
+    //All drawable objects here
+    var drawable = [];
     socket.on('newPlayer',function(e){
     player = e;
     console.log(player);
     })
     //Populate the gamefield of size xSize * ySize, fields wil be the size of fieldSize * fieldSize
-    function fieldInit(xSize,ySize, fieldSize){
+    var fieldSize;
+    function fieldInit(xSize,ySize, fieldsize){
+        fieldSize = fieldsize;
         canvas.width = xSize * fieldSize;
         canvas.height = ySize * fieldSize;
         for(x = 0;x<xSize;x++){
@@ -68,9 +72,19 @@
         x: 0,
         y: 0
     }
+    //Store the point from which the unit was dragged in case of invalid moves
+    var dragOriginX = 0;
+    var dragOriginY = 0;
     window.addEventListener('mousemove',function(e){
         mouse.x = e.x;
         mouse.y = e.y;
+        if(draggedUnit != 0 && draggedUnit.dragged === true){
+            draggedUnit.x = Math.floor(mouse.x/52);
+            draggedUnit.y = Math.floor(mouse.y/52);
+            clearBoard();
+            player.units.forEach(function(e){if(e.dragged==false)e.draw()})
+            draggedUnit.dragDraw();
+        }
     });
     window.addEventListener('click', function(e){
         console.log("X: " + mouse.x + " Y: " + mouse.y);
@@ -79,9 +93,34 @@
         let clickedOnY = Math.floor(mouse.y/52);
         //fieldArray[clickedOnX][clickedOnY].test(); //Used for debugging click calculation
     });
+    var draggedUnit = 0;
+    window.addEventListener('mousedown',function(e){
+        player.units.forEach(function(unit){
+            //Check if there are any units under the mouse cursor
+            if(unit.x === Math.floor(e.x/fieldSize) && unit.y === Math.floor(e.y/fieldSize)){
+                console.log(unit)
+                dragOriginX = unit.x;
+                dragOriginY = unit.y;
+                unit.dragged = true;
+                draggedUnit = unit;
+            }
+        });
+    })
 
+    window.addEventListener('mouseup',function(e){
+        if(draggedUnit!=0&&draggedUnit.dragged===true) {
+            moveUnit(draggedUnit, Math.floor(mouse.x / fieldSize), Math.floor(mouse.y / fieldSize));
+            draggedUnit.x = Math.floor(mouse.x / fieldSize);
+            draggedUnit.y = Math.floor(mouse.y / fieldSize);
+            draggedUnit.dragged = false;
+            clearBoard();
+            player.units.forEach(function(e){e.draw()})
+            draggedUnit = 0;
+        }
+    })
     function buyUnit(unit) {
         //TODO buying units
+        player.units.push(new Unit(1,1,1,1,1,1,1));
         if (player.money >= 2) {
             socket.emit('buyUnit', {
                 unit: unit,
@@ -92,8 +131,8 @@
     function moveUnit(unit,x ,y){
         socket.emit('moveUnit',{
             unit: unit,
-            oldX: unit.x,
-            oldY: unit.y,
+            oldX: dragOriginX,
+            oldY: dragOriginY,
             newX: x,
             newY: y,
             playerID: socket.id
@@ -104,7 +143,9 @@
     socket.on('playerInfo', function(e){
         console.log(e);
     })
+    function clearBoard(){
+        drawable.forEach(function(e){e.draw()});
+    }
+    //The unit who we love to abuse
+    //player.units.push(new unit(4,4,5,1,1,1,1))
 </script>
-
-
-//Temporary client side html page, is subject to change.

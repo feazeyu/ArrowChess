@@ -42,9 +42,11 @@ io.on('connect',function(socket){
         unitList:[],
         projectileList:[],
         shopItems:[],
-        fieldArray:[]
+        fieldArray:[],
+        units:[]
     }
     playerList.push(socket);
+    socket.emit('newPlayer',socket.player);
   //Generate an empty client board state
     for(x = 0;x<xSize;x++){
         socket.player.fieldArray.push([]);
@@ -53,8 +55,8 @@ io.on('connect',function(socket){
         }
     }
   //Event Handlers
-    socket.on('gimme',function(e){
-        sendPlayerInfo(playerList[0].id);
+    socket.on('moveUnit',function(e){
+        console.log("Player "+e.playerID+" has moved a unit from: X: " +e.oldX+ " Y: " + e.oldY+ " to: X:" +e.newX+ ' Y: ' + e.newY );
     });
     socket.on('buyUnit',function(e){
         playerList.forEach(function(element){
