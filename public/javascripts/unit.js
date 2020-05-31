@@ -126,7 +126,7 @@ class Unit{
         c.beginPath();
         c.strokeStyle = "#FFFFFF";
         c.lineWidth = 5
-        c.moveTo(this.x*52+26, this.y*52+40);
+        c.moveTo(this.x*52+26, this.y*52+43);
         c.lineTo(this.x*52+26,this.y*52+10);
         c.moveTo(this.x*52+16,this.y*52+20)
         c.lineTo(this.x*52+27,this.y*52+9)
