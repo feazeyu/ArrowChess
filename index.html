@@ -22,6 +22,7 @@
 <script src="/public/javascripts/shop.js"></script>
 <script src="/public/javascripts/player.js"></script>
 <script src="/public/javascripts/client.js"></script>
+<script src="/public/javascripts/Field.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
     //Array to store all fields
@@ -31,8 +32,12 @@
     //Get the object of gamefield
     var canvas = document.getElementById("game");
     var c = canvas.getContext("2d");
-    //Set the height and width of the gamefield
-
+    //Create the player on join.
+    var player;
+    socket.on('newPlayer',function(e){
+    player = e;
+    console.log(player);
+    })
     //Populate the gamefield of size xSize * ySize, fields wil be the size of fieldSize * fieldSize
     function fieldInit(xSize,ySize, fieldSize){
         canvas.width = xSize * fieldSize;
@@ -41,33 +46,11 @@
             fieldArray.push([]);
             for(y = 0;y <ySize;y++){
                 //Input field data here
-                fieldArray[x].push(new tempRect(x, y, fieldSize));
+                fieldArray[x].push(new Field(x, y, fieldSize));
             }
         }
-    }
-    //Temporary rectangle object
-    class tempRect{
-        constructor(x, y, size){
-            this.x = x;
-            this.y = y;
-            this.size = size;
-            this.buildable = false;
-            this.enemy = false;
-            this.draw();
-        }
-        draw(){
-            c.clearRect(this.x*this.size, this.y*this.size, this.size, this.size);
-            if(this.enemy == true){
-                c.strokeStyle = "#FF0000"
-            } else if (this.buildable == false){
-                c.strokeStyle = "#929090"
-            } else {
-                c.strokeStyle = "#FFFFFF"
-            }
-            c.beginPath();
-            c.strokeRect(this.x*this.size, this.y*this.size, this.size, this.size);
-            c.closePath();
-        }
+
+
         /*     Used for testing if click event works.
         test(){
             c.clearRect(this.x*this.size, this.y*this.size, this.size, this.size);
@@ -97,14 +80,27 @@
         //fieldArray[clickedOnX][clickedOnY].test(); //Used for debugging click calculation
     });
 
-    function buyUnit(unit){
-        //TODO
-      socket.emit('buyUnit',{
-          unit: "unit",
-          playerID: socket.id
-      });
-    };
-
+    function buyUnit(unit) {
+        //TODO buying units
+        if (player.money >= 2) {
+            socket.emit('buyUnit', {
+                unit: unit,
+                playerID: socket.id
+            });
+        }
+    }
+    function moveUnit(unit,x ,y){
+        socket.emit('moveUnit',{
+            unit: unit,
+            oldX: unit.x,
+            oldY: unit.y,
+            newX: x,
+            newY: y,
+            playerID: socket.id
+        })
+        unit.x = x;
+        unit.y = y;
+    }
     socket.on('playerInfo', function(e){
         console.log(e);
     })

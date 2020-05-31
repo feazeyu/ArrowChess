@@ -122,7 +122,18 @@ class Unit{
         }
     }
 
-
+    draw() {
+        c.beginPath();
+        c.strokeStyle = "#FFFFFF";
+        c.lineWidth = 5
+        c.moveTo(this.x*52+26, this.y*52+40);
+        c.lineTo(this.x*52+26,this.y*52+10);
+        c.moveTo(this.x*52+16,this.y*52+20)
+        c.lineTo(this.x*52+27,this.y*52+9)
+        c.moveTo(this.x*52+36,this.y*52+20)
+        c.lineTo(this.x*52+25,this.y*52+9)
+        c.stroke();
+    }
 
 
 }
