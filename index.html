@@ -18,13 +18,181 @@
 </body>
 </html>
 <script src="/public/javascripts/projectile.js"></script>
+<script src="/public/javascripts/text.js"></script>
 <script src="/public/javascripts/unit.js"></script>
 <script src="/public/javascripts/shop.js"></script>
 <script src="/public/javascripts/player.js"></script>
 <script src="/public/javascripts/client.js"></script>
 <script src="/public/javascripts/Field.js"></script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="/public/javascripts/app.js"></script>
+<script>
+    //Array to store all fields
+    var fieldArray = [];
+    //Begin a socket connection
+    var socket = io();
+    //Get the object of gamefield
+    var canvas = document.getElementById("game");
+    var c = canvas.getContext("2d");
+    //Create the player on join.
+    var player;
+    socket.on('newPlayer',function(e){
+    player = e;
+    console.log(player);
+    })
+    //Populate the game field of size xSize * ySize, fields wil be the size of fieldSize * fieldSize
+    var fieldSize;
+    function fieldInit(xSize,ySize, fieldsize){
+        fieldSize = fieldsize;
+        canvas.width = xSize * fieldSize;
+        canvas.height = ySize * fieldSize;
+        for(x = 0;x<xSize;x++){
+            fieldArray.push([]);
+            for(y = 0;y <ySize;y++){
+                //Input field data here
+                fieldArray[x].push(new Field(x, y, fieldSize));
+            }
+        }
 
 
-//Temporary client side html page, is subject to change.
+        /*     Used for testing if click event works.
+        test(){
+            c.clearRect(this.x*this.size, this.y*this.size, this.size, this.size);
+            c.beginPath();
+            c.strokeStyle = "#FF0000";
+            c.strokeRect(this.x*this.size, this.y*this.size, this.size, this.size);
+            c.closePath();
+        }
+         */
+    }
+    //The timer display object
+    var timer = new Text(30,234,234,100,'#575757');
+    //The event announcer
+    var eventAnnouncer = new Text('Nothing is happening.',234,264,20,'#575757');
+    //Call the init
+    fieldInit(9,9,52);
+    //Track the mouse position
+    var mouse= {
+        x: 0,
+        y: 0
+    }
+    //Store the point from which the unit was dragged in case of invalid moves
+    var dragOriginX = 0;
+    var dragOriginY = 0;
+    window.addEventListener('mousemove',function(e){
+        mouse.x = e.x;
+        mouse.y = e.y;
+        //Move the dragged unit around if LMB is held
+        if(draggedUnit !== 0 && draggedUnit.dragged === true){
+            draggedUnit.x = Math.floor(mouse.x/52);
+            draggedUnit.y = Math.floor(mouse.y/52);
+            clearBoard();
+            drawEntities();
+        }
+    });
+    window.addEventListener('click', function(e){
+        console.log("X: " + mouse.x + " Y: " + mouse.y);
+        //Calculate the field you clicked on
+        let clickedOnX = Math.floor(mouse.x/52);
+        let clickedOnY = Math.floor(mouse.y/52);
+        //fieldArray[clickedOnX][clickedOnY].test(); //Used for debugging click calculation
+    });
+    var draggedUnit = 0;
+    window.addEventListener('mousedown',function(e){
+        player.units.forEach(function(unit){
+            //Check if there are any units under the mouse cursor
+            if(unit.x === Math.floor(e.x/fieldSize) && unit.y === Math.floor(e.y/fieldSize)){
+                console.log(unit)
+                dragOriginX = unit.x;
+                dragOriginY = unit.y;
+                unit.dragged = true;
+                draggedUnit = unit;
+            }
+        });
+    })
+
+    window.addEventListener('mouseup',function(e){
+        if(draggedUnit!==0&&draggedUnit.dragged===true) {
+            moveUnit(draggedUnit, Math.floor(mouse.x / fieldSize), Math.floor(mouse.y / fieldSize));
+            draggedUnit.x = Math.floor(mouse.x / fieldSize);
+            draggedUnit.y = Math.floor(mouse.y / fieldSize);
+            draggedUnit.dragged = false;
+            clearBoard();
+            drawEntities();
+            draggedUnit = 0;
+        }
+    })
+    function buyUnit(tier, type, direction, trait, x, y, playerID) {
+        //TODO buying units
+        if (player.gold >= 2) {
+            player.units.push(new Unit(tier, type, direction, trait, x, y, playerID));
+            socket.emit('buyUnit', {
+                unit: new Unit(tier, type, direction, trait, x, y, playerID),
+                playerID: socket.id
+            });
+        }
+    }
+    //Variable for temporarily storing the unit being moved
+    let movedUnit;
+    function moveUnit(unit,x ,y){
+        socket.emit('moveUnit',{
+            unit: unit,
+            oldX: dragOriginX,
+            oldY: dragOriginY,
+            newX: x,
+            newY: y,
+            playerID: socket.id
+        })
+        movedUnit = unit;
+        unit.x = x;
+        unit.y = y;
+    }
+    socket.on('playerInfo', function(e){
+        console.log(e);
+    })
+    //Get board data from the server
+    socket.on('getBoardData',function(e){
+        e.forEach((subArray)=>{
+            subArray.forEach((field=>{
+                //cannot just set the clientside field to the recieved field as server side fields don't have the draw method
+                fieldArray[field.x][field.y].buildable = field.buildable;
+                fieldArray[field.x][field.y].units = field.units;
+                fieldArray[field.x][field.y].enemy = field.enemy;
+            }))
+        })
+        clearBoard();
+        drawEntities();
+    })
+    //If a client moves a unit illegally, revert the move.
+    socket.on('invalidateMove', function(e){
+        movedUnit.x = e.x;
+        movedUnit.y = e.y;
+        clearBoard();
+        drawEntities();
+        movedUnit.draw();
+    })
+
+    //Happens every second
+    socket.on('tick',(e)=>{
+        //Don't display the timer while fighting
+        if(e.currentEvent >= 2){
+            timer.value = '-';
+        } else {
+            timer.value = e.time;
+        }
+        eventAnnouncer.value = e.currentEventName;
+        clearBoard();
+        drawEntities();
+    })
+
+    function clearBoard(){
+        fieldArray.forEach(function(sub){sub.forEach((field)=>{field.draw()})});
+    }
+
+    function drawEntities(){
+        timer.draw();
+        eventAnnouncer.draw();
+        player.units.forEach((unit)=>{
+            unit.draw();
+        })
+    }
+</script>

@@ -80,6 +80,10 @@ class Unit{
         this.atk = Unit.setOfFlags[tier][type][1];
         this.dirs = Unit.setOfFlags[tier][type][2];
         this.player = player;
+        this.draw();
+        //Used for the drag and drop stuff;
+        this.dragged = false;
+        //Everything that has the draw() method should be pushed into drawArray
         for(let x in this.dirs) {
             x = (x + this.direction) % 4;
         }
@@ -123,15 +127,30 @@ class Unit{
     }
 
     draw() {
+        if(this.dragged !== true) {
+            c.beginPath();
+            c.strokeStyle = "#FFFFFF";
+            c.lineWidth = 5
+            c.moveTo(this.x * 52 + 26, this.y * 52 + 43);
+            c.lineTo(this.x * 52 + 26, this.y * 52 + 10);
+            c.moveTo(this.x * 52 + 16, this.y * 52 + 20)
+            c.lineTo(this.x * 52 + 27, this.y * 52 + 9)
+            c.moveTo(this.x * 52 + 36, this.y * 52 + 20)
+            c.lineTo(this.x * 52 + 25, this.y * 52 + 9)
+            c.stroke();
+        } else {this.dragDraw()}
+    }
+    //draw while the unit is being dragged.
+    dragDraw(){
         c.beginPath();
         c.strokeStyle = "#FFFFFF";
         c.lineWidth = 5
-        c.moveTo(this.x*52+26, this.y*52+40);
-        c.lineTo(this.x*52+26,this.y*52+10);
-        c.moveTo(this.x*52+16,this.y*52+20)
-        c.lineTo(this.x*52+27,this.y*52+9)
-        c.moveTo(this.x*52+36,this.y*52+20)
-        c.lineTo(this.x*52+25,this.y*52+9)
+        c.moveTo(mouse.x+26-fieldSize/2,mouse.y+40-fieldSize/2);
+        c.lineTo(mouse.x+26-fieldSize/2,mouse.y+10-fieldSize/2);
+        c.moveTo(mouse.x+16-fieldSize/2,mouse.y+20-fieldSize/2);
+        c.lineTo(mouse.x+27-fieldSize/2,mouse.y+9-fieldSize/2);
+        c.moveTo(mouse.x+36-fieldSize/2,mouse.y+20-fieldSize/2);
+        c.lineTo(mouse.x+25-fieldSize/2,mouse.y+9-fieldSize/2);
         c.stroke();
     }
 
