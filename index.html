@@ -34,13 +34,11 @@
     var c = canvas.getContext("2d");
     //Create the player on join.
     var player;
-    //All drawable objects here
-    var drawable = [];
     socket.on('newPlayer',function(e){
     player = e;
     console.log(player);
     })
-    //Populate the gamefield of size xSize * ySize, fields wil be the size of fieldSize * fieldSize
+    //Populate the game field of size xSize * ySize, fields wil be the size of fieldSize * fieldSize
     var fieldSize;
     function fieldInit(xSize,ySize, fieldsize){
         fieldSize = fieldsize;
@@ -78,12 +76,12 @@
     window.addEventListener('mousemove',function(e){
         mouse.x = e.x;
         mouse.y = e.y;
-        if(draggedUnit != 0 && draggedUnit.dragged === true){
+        //Move the dragged unit around if LMB is held
+        if(draggedUnit !== 0 && draggedUnit.dragged === true){
             draggedUnit.x = Math.floor(mouse.x/52);
             draggedUnit.y = Math.floor(mouse.y/52);
             clearBoard();
-            player.units.forEach(function(e){if(e.dragged==false)e.draw()})
-            draggedUnit.dragDraw();
+            drawEntities();
         }
     });
     window.addEventListener('click', function(e){
@@ -108,26 +106,28 @@
     })
 
     window.addEventListener('mouseup',function(e){
-        if(draggedUnit!=0&&draggedUnit.dragged===true) {
+        if(draggedUnit!==0&&draggedUnit.dragged===true) {
             moveUnit(draggedUnit, Math.floor(mouse.x / fieldSize), Math.floor(mouse.y / fieldSize));
             draggedUnit.x = Math.floor(mouse.x / fieldSize);
             draggedUnit.y = Math.floor(mouse.y / fieldSize);
             draggedUnit.dragged = false;
             clearBoard();
-            player.units.forEach(function(e){e.draw()})
+            drawEntities();
             draggedUnit = 0;
         }
     })
-    function buyUnit(unit) {
+    function buyUnit(tier, type, direction, trait, x, y, playerID) {
         //TODO buying units
-        player.units.push(new Unit(1,1,1,1,1,1,1));
-        if (player.money >= 2) {
+        if (player.gold >= 2) {
+            player.units.push(new Unit(tier, type, direction, trait, x, y, playerID));
             socket.emit('buyUnit', {
-                unit: unit,
+                unit: new Unit(tier, type, direction, trait, x, y, playerID),
                 playerID: socket.id
             });
         }
     }
+    //Variable for temporarily storing the unit being moved
+    let movedUnit;
     function moveUnit(unit,x ,y){
         socket.emit('moveUnit',{
             unit: unit,
@@ -137,15 +137,41 @@
             newY: y,
             playerID: socket.id
         })
+        movedUnit = unit;
         unit.x = x;
         unit.y = y;
     }
     socket.on('playerInfo', function(e){
         console.log(e);
     })
+    //Get board data from the server
+    socket.on('getBoardData',function(e){
+        e.forEach((subArray)=>{
+            subArray.forEach((field=>{
+                //cannot just set the clientside field to the recieved field as server side fields don't have the draw method
+                fieldArray[field.x][field.y].buildable = field.buildable;
+                fieldArray[field.x][field.y].units = field.units;
+                fieldArray[field.x][field.y].enemy = field.enemy;
+            }))
+        })
+        clearBoard();
+        drawEntities();
+    })
+    //If a client moves a unit illegally, revert the move.
+    socket.on('invalidateMove', function(e){
+        movedUnit.x = e.x;
+        movedUnit.y = e.y;
+        clearBoard();
+        drawEntities();
+        movedUnit.draw();
+    })
     function clearBoard(){
-        drawable.forEach(function(e){e.draw()});
+        fieldArray.forEach(function(sub){sub.forEach((field)=>{field.draw()})});
     }
-    //The unit who we love to abuse
-    //player.units.push(new unit(4,4,5,1,1,1,1))
+
+    function drawEntities(){
+        player.units.forEach((unit)=>{
+            unit.draw();
+        })
+    }
 </script>

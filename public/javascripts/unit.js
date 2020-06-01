@@ -83,6 +83,7 @@ class Unit{
         this.draw();
         //Used for the drag and drop stuff;
         this.dragged = false;
+        //Everything that has the draw() method should be pushed into drawArray
         for(let x in this.dirs) {
             x = (x + this.direction) % 4;
         }
@@ -126,16 +127,18 @@ class Unit{
     }
 
     draw() {
-        c.beginPath();
-        c.strokeStyle = "#FFFFFF";
-        c.lineWidth = 5
-        c.moveTo(this.x*52+26, this.y*52+43);
-        c.lineTo(this.x*52+26,this.y*52+10);
-        c.moveTo(this.x*52+16,this.y*52+20)
-        c.lineTo(this.x*52+27,this.y*52+9)
-        c.moveTo(this.x*52+36,this.y*52+20)
-        c.lineTo(this.x*52+25,this.y*52+9)
-        c.stroke();
+        if(this.dragged !== true) {
+            c.beginPath();
+            c.strokeStyle = "#FFFFFF";
+            c.lineWidth = 5
+            c.moveTo(this.x * 52 + 26, this.y * 52 + 43);
+            c.lineTo(this.x * 52 + 26, this.y * 52 + 10);
+            c.moveTo(this.x * 52 + 16, this.y * 52 + 20)
+            c.lineTo(this.x * 52 + 27, this.y * 52 + 9)
+            c.moveTo(this.x * 52 + 36, this.y * 52 + 20)
+            c.lineTo(this.x * 52 + 25, this.y * 52 + 9)
+            c.stroke();
+        } else {this.dragDraw()}
     }
     dragDraw(){
         c.beginPath();
