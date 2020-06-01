@@ -18,7 +18,7 @@ class Field{
         if (this.enemy === true) {
             c.strokeStyle = "#FF0000"
         } else if (this.buildable === false) {
-            c.strokeStyle = "#929090"
+            c.strokeStyle = "#575757"
         } else {
             c.strokeStyle = "#FFFFFF"
         }

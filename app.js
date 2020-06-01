@@ -16,8 +16,6 @@ app.use(express.static(publicDir));
 const Player = require('./lib/player.js');	
 const Field = require('./public/javascripts/Field.js');
 
-
-var socketList = [];
 var playerList = [];
 
 //BoardSize
@@ -40,11 +38,13 @@ app.get('/', function(request, response){
 
 //Trigger on client connection
 io.on('connect',function(socket){
-  //Store client resources, level and health
+  //Store client info
     socket.player={
         gold:0,
         hp:10,
-        unitList:[],
+        level: 0,
+        xpTillNextLevel: 0,
+        enemyUnitList:[],
         projectileList:[],
         shopItems:[],
         fieldArray:[],
@@ -139,4 +139,36 @@ function sendFieldData(socket){
             socket.emit('getBoardData',socket.player.fieldArray)
     console.log("Sent field data to player: " + socket.id);
 }
+//Array to hold the order of events to happen and a pointer to know where currently are we.
+/*
+    0 = Nothing is happening (Just wait for people to load in)
+    1 = Shopping time!
+    2 = NPC fight
+    3 = Player fight
+    4 = Boss fight
+ */
+var eventList = [0,1,2,1,2,1,2,1,3];
+var eventNames = ['The game will start soon...','Shopping time!','Fight!',"You're fighting against: ","Trouble ahead."]
+var pointer = 0;
+//Variable to hold the time until next event.
+var time = 10;
+setInterval(()=>{
+        if(playerList.length >= 2 && eventList[pointer < 2]) { //Nobody is gonna play alone. Bring your friends!
+            time -= 1; //Tick tok                                   Fights end when nobody has stuff to say anymore, not when a timer says so
+        }
+        if(time < 0){
+            time = 30
+            if(pointer < eventList.length){
+                pointer++;
+            } else {
+                //Set to one to avoid the original delay
+                pointer = 1;
+            }
+        }
+            io.emit('tick', {
+                time:time,
+                currentEvent: eventList[pointer],
+                currentEventName: eventNames[eventList[pointer]]
+            });
+},1000)
 module.exports = app;

@@ -18,6 +18,7 @@
 </body>
 </html>
 <script src="/public/javascripts/projectile.js"></script>
+<script src="/public/javascripts/text.js"></script>
 <script src="/public/javascripts/unit.js"></script>
 <script src="/public/javascripts/shop.js"></script>
 <script src="/public/javascripts/player.js"></script>
@@ -63,6 +64,10 @@
         }
          */
     }
+    //The timer display object
+    var timer = new Text(30,234,234,100,'#575757');
+    //The event announcer
+    var eventAnnouncer = new Text('Nothing is happening.',234,264,20,'#575757');
     //Call the init
     fieldInit(9,9,52);
     //Track the mouse position
@@ -165,11 +170,27 @@
         drawEntities();
         movedUnit.draw();
     })
+
+    //Happens every second
+    socket.on('tick',(e)=>{
+        //Don't display the timer while fighting
+        if(e.currentEvent >= 2){
+            timer.value = '-';
+        } else {
+            timer.value = e.time;
+        }
+        eventAnnouncer.value = e.currentEventName;
+        clearBoard();
+        drawEntities();
+    })
+
     function clearBoard(){
         fieldArray.forEach(function(sub){sub.forEach((field)=>{field.draw()})});
     }
 
     function drawEntities(){
+        timer.draw();
+        eventAnnouncer.draw();
         player.units.forEach((unit)=>{
             unit.draw();
         })

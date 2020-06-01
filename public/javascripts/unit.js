@@ -140,6 +140,7 @@ class Unit{
             c.stroke();
         } else {this.dragDraw()}
     }
+    //draw while the unit is being dragged.
     dragDraw(){
         c.beginPath();
         c.strokeStyle = "#FFFFFF";
