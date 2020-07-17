@@ -1,7 +1,7 @@
 var createError = require('http-errors');
 var express = require('express')
-
-
+var Player = require('./public/javascripts/player.js');
+var Fight = require('./public/javascripts/fight.js');
 var socket_io = require('socket.io');
 var app = express();
 
@@ -13,7 +13,7 @@ app.io = io;
 const publicDir = require('path').join(__dirname,'/public');
 app.use(express.static(publicDir));
 
-const Player = require('./lib/player.js');	
+//const Player = require('./lib/player.js');
 const Field = require('./public/javascripts/Field.js');
 
 var playerList = [];
@@ -147,11 +147,44 @@ function getPlayerById(pid){
         }
     })
 }
+//TODO Generate an enemy wave
+function generateNPCWave(){
+    return [new Unit(1,1,1,1,1,1,'NPC')]
+}
 //TODO Starting fights between people
+let fightList = [];
 function startFight(mode){
+    playerList.forEach((socket)=>{
+        socket.player.fighting = false;
+    })
     switch (mode) {
-        case 'pve': break;
-        case 'pvp': break;
+        case 'pve':
+            let npc = new Player(0);
+            npc.units = generateNPCWave();
+            playerList.forEach((socket)=>{
+                socket.player.fighting = true;
+                fightList.push(new Fight(socket.player, npc))
+            })
+            break;
+        case 'pvp':
+            let availablePlayers = [];
+            playerList.forEach((socket)=>{
+                if(socket.player.fighting === false){
+                    availablePlayers.push(socket);
+                }
+            })
+            for(;availablePlayers.length > 0;){ //Picks two random players from available players array to fight
+                if(availablePlayers.length === 1){ //If there's an odd number of players, fight with a random player,
+                                                   //That player gets rewards and loses health from both fights
+                    availablePlayers.push(playerList[Math.floor(Math.random()*availablePlayers.length)])
+                }
+                let p1 = Math.floor(Math.random()*availablePlayers.length);
+                availablePlayers.splice(p1, 1);
+                let p2 = Math.floor(Math.random()*availablePlayers.length);
+                availablePlayers.splice(p2, 1);
+                fightList.push(new Fight(playerList[p1], playerList[p2]));
+            }
+            break;
         default: console.log('No mode selected');
     }
 }
@@ -169,19 +202,15 @@ var pointer = 0;
 //Variable to hold the time until next event.
 var time = 10;
 setInterval(()=>{
-        if(playerList.length >= 2 && eventList[pointer < 2]) { //Game won't start with only 1 player
+        if(playerList.length >= 2 && pointer < 2) { //Game won't start with only 1 player
             time -= 1; //Tick tok
         }
         if(eventList[pointer] === 2 ){
-         for(i = 0;i < playerList.length;i++) {
              startFight('pve')
          }
-        }
         if(eventList[pointer] === 3 ){
-         for(i=0;i<playerList.length;i+=2) {
              startFight('pvp');
          }
-        }
         if(time < 0){
             time = 30
             if(pointer < eventList.length){

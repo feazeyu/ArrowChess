@@ -10,6 +10,9 @@ class Player{
         this.projectiles = [];
         this.shop = new Shop();
     }
-
+}
+try{
+modules.exports = Player;
+}catch(e){
 
 }
