@@ -44,11 +44,11 @@ io.on('connect',function(socket){
         hp:10,
         level: 0,
         xpTillNextLevel: 0,
-        enemyUnitList:[],
         projectileList:[],
         shopItems:[],
         fieldArray:[],
-        units:[]
+        units:[],
+        fighting: false
     }
     playerList.push(socket);
     socket.emit('newPlayer',socket.player);
@@ -139,6 +139,22 @@ function sendFieldData(socket){
             socket.emit('getBoardData',socket.player.fieldArray)
     console.log("Sent field data to player: " + socket.id);
 }
+//In = player ID, Out = Player object, found in playerList
+function getPlayerById(pid){
+    playerList.forEach((socket)=>{
+        if(socket.id === pid){
+            return socket;
+        }
+    })
+}
+//TODO Starting fights between people
+function startFight(mode){
+    switch (mode) {
+        case 'pve': break;
+        case 'pvp': break;
+        default: console.log('No mode selected');
+    }
+}
 //Array to hold the order of events to happen and a pointer to know where currently are we.
 /*
     0 = Nothing is happening (Just wait for people to load in)
@@ -153,8 +169,18 @@ var pointer = 0;
 //Variable to hold the time until next event.
 var time = 10;
 setInterval(()=>{
-        if(playerList.length >= 2 && eventList[pointer < 2]) { //Nobody is gonna play alone. Bring your friends!
-            time -= 1; //Tick tok                                   Fights end when nobody has stuff to say anymore, not when a timer says so
+        if(playerList.length >= 2 && eventList[pointer < 2]) { //Game won't start with only 1 player
+            time -= 1; //Tick tok
+        }
+        if(eventList[pointer] === 2 ){
+         for(i = 0;i < playerList.length;i++) {
+             startFight('pve')
+         }
+        }
+        if(eventList[pointer] === 3 ){
+         for(i=0;i<playerList.length;i+=2) {
+             startFight('pvp');
+         }
         }
         if(time < 0){
             time = 30
